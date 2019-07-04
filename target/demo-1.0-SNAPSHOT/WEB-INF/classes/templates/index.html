@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en"  xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+
+<script th:src="@{https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js}"></script>
+<link rel="stylesheet" th:href="@{http://cdn.bootcss.com/sweetalert/1.1.2/sweetalert.css}">
+<script th:src="@{http://cdn.bootcss.com/sweetalert/1.1.2/sweetalert.min.js}"></script>
+<link th:href="@{https://cdn.bootcss.com/twitter-bootstrap/3.3.7/css/bootstrap.min.css}" rel="stylesheet">
+<link rel="stylesheet" th:href="@{https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.css}">
+<script th:src="@{https://cdn.bootcss.com/twitter-bootstrap/3.3.7/js/bootstrap.min.js}"></script>
+<script type="text/template">
+    <tr id="{id}">
+        <td>{userCode}</td>
+        <td>{userName}</td>
+        <td>{userPassword}</td>
+        <td>{gender}</td>
+        <td>{birthday}</td>
+        <td>{phone}</td>
+        <td>{creationDate}</td>
+        <td><i class="fa fa-times-circle" style="color: red;font-size: 2em;cursor:pointer" onclick="del_user({id})"></i></td>
+    </tr>
+</script>
+<body>
+<div class="modal fade in" id="addUserModal" data-toggle="modal" tabindex="-1" role="dialog" aria-labelledby="eaddUserModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="edit_billLabel">用户添加</h4>
+            </div>
+            <div class="modal-body">
+                <form action="" id="addUserForm">
+                    <div class="form-group">
+                        <label for="userCode">userCode</label>
+                        <input type="text" name="userCode" id="userCode" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="userName">userName</label>
+                        <input type="text" name="userName" id="userName" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="userPassword">userPassword</label>
+                        <input type="text" name="userPassword" id="userPassword" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="gender">gender</label>
+                        <input type="text" name="gender" id="gender" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">phone</label>
+                        <input type="tel" name="phone" id="phone" class="form-control">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-default" id="add_user" onclick="add_user()">提交</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            <form action="">
+                <div class="form-group">
+                    <lable for="name">Name:</lable>
+                    <input type="text" class="form-control" id="name" name="name">
+                </div>
+                <div class="form-group col-sm-4">
+                    <input id="submit" type="button" class="btn btn-primary" value="submit"/>
+                </div>
+                <div>
+                    <input type="button" id="addUseButton" class="btn btn-primary" value="addUser" data-toggle="modal" data-target="#addUserModal">
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <table class="table table-striped" id="order">
+            <thead>
+            <tr>
+                <td>userCode</td>
+                <td>userName</td>
+                <td>userPassword</td>
+                <td>gender</td>
+                <td>birthday</td>
+                <td>phone</td>
+                <td>createTime</td>
+                <td>option</td>
+            </tr>
+            </thead>
+            <tbody id="showMsg">
+            </tbody>
+        </table>
+    </div>
+</div>
+<section>
+    <script type="text/javascript">
+
+        function templateToView(data) {
+            var html = $('script[type="text/template"]').html();//模板代码
+            var arr=[];
+            $("#showMsg").html("");//清空tbody
+            $.each(data, function (index, object) {
+                arr.push(formatTemplate(object, html));
+            });
+            $("#showMsg").append(arr.join("，"));
+        }
+        function formatTemplate(object, tmpl) {
+            //m1 匹配到的字符{W} m2 字符的内容 W
+            return tmpl.replace(/{(\w+)}/g,function (m1, m2, m3) {
+                if(!m2){
+                    return "";
+                }
+                if(m2 === "creationDate"){
+                    return ChangeDateFormat(object[m2]);
+                }
+                if (m2 === "gender") {
+                    return (object[m2] === 1 ? "男" : "女");
+                }
+                if (m2 === "birthday") {
+                    return ChangeDateFormat(object[m2]);
+                }
+                return object[m2];
+            })
+        }
+        //时间格式
+        function ChangeDateFormat(cellval) {
+            var date = new Date(parseInt(cellval, 10));
+            var month = date.getMonth() + 1 < 10 ? "0" + (date.getMonth() + 1) : date.getMonth() + 1;
+            var currentDate = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
+            return date.getFullYear() + "-" + month + "-" + currentDate;
+        }
+        function getUses(){
+            var word = $("#name").val();
+            $.ajax({
+                url:"/test",
+                type:"post",
+                data:{"userName":word},
+                success:function (res) {
+                    templateToView(res)
+                }
+            })
+        }
+        $("#submit").on("click",function () {
+            getUses();
+        })
+        function del_user(id) {
+
+            sweetAlert({
+                title:"是否删除",
+                text:"你将无法更改!",
+                type:"warning",
+                showCancelButton:true,
+                confirmButtonColor:"#dd6b55",
+                closeOnConfirm:false
+
+            },function () {
+                $.ajax({
+                    url:"/deleteUserById",
+                    type:"post",
+                    data:{"id":id},
+                    success:function (data) {
+                        if(data==="1"){
+                            sweetAlert("删除","用户已删除","success")
+                        }
+                        getUses()
+                    }
+                })
+            })
+        }
+        function add_user() {
+            var form = $("#addUserForm"),
+                userCode = $("#userCode").val(),
+                userName = $("#userName").val(),
+                phone = $("#phone").val(),
+                gender = $("#gender").val(),
+                userPassword =$("#userPassword").val();
+
+            if (userCode === "" || userCode === undefined) {
+                swl("失败","不能为空", "error");
+            }else if(userName === "" || userName === undefined) {
+                swl("失败","不能为空", "error");
+            }else if(userPassword === "" || userPassword === undefined) {
+                swl("失败","不能为空", "error");
+            }else if(phone === "" || phone === undefined) {
+                swl("失败","不能为空", "error");
+            }else if(gender === "" || gender === undefined) {
+                swl("失败","不能为空", "error");
+            } else {
+                $.ajax({
+                    url:"/addUser",
+                    type:"post",
+                    data:form.serialize(),
+                    success:function (res) {
+                        if(res === "1"){
+                            sweetAlert("成功","用户添加成功","success");
+                            $("#addUserModal").modal('hide');
+                            $("#name").val("");
+                            getUses();
+                        }else{
+                            sweetAlert("错误","删除失败","error")
+                        }
+                    }
+                });
+            }
+        }
+        function swl(title, msg, type) {
+            sweetAlert(title,msg,type);
+        }
+        $("#addUserModal").on("hidden.bs.modal", function(){
+                $("#userCode").val("");
+                $("#userName").val("");
+                $("#phone").val("");
+                $("#userPassword").val("");
+                $("#gender").val("");
+        })
+    </script>
+</section>
+</body>
+</html>
